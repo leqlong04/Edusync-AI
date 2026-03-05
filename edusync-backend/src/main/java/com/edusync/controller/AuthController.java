@@ -2,6 +2,7 @@ package com.edusync.controller;
 
 import com.edusync.model.dto.request.LoginRequest;
 import com.edusync.model.dto.request.RegisterRequest;
+import com.edusync.model.dto.response.ApiResponse;
 import com.edusync.model.dto.response.JwtAuthenticationResponse;
 import com.edusync.service.AuthService;
 import jakarta.validation.Valid;
@@ -20,14 +21,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResponse<String>> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         authService.register(registerRequest);
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.ok(ApiResponse.success("User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ApiResponse<JwtAuthenticationResponse>> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         JwtAuthenticationResponse response = authService.login(loginRequest);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

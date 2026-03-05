@@ -1,5 +1,6 @@
 package com.edusync.service;
 
+import com.edusync.exception.AppException;
 import com.edusync.model.dto.request.LoginRequest;
 import com.edusync.model.dto.request.RegisterRequest;
 import com.edusync.model.dto.response.JwtAuthenticationResponse;
@@ -7,6 +8,7 @@ import com.edusync.model.entity.User;
 import com.edusync.repository.UserRepository;
 import com.edusync.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,11 +29,11 @@ public class AuthService {
     @Transactional
     public User register(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
+            throw new AppException("Username matches an existing user", HttpStatus.BAD_REQUEST);
         }
 
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email Address already in use!");
+            throw new AppException("Email already in use", HttpStatus.BAD_REQUEST);
         }
 
         User user = User.builder()
