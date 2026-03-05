@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: edusync-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/edusync_db
+    username: postgres
+    password: lequanglong2012
+    driver-class-name: org.postgresql.Driver
+
+    jpa:
+      hibernate:
+        ddl-auto: update
+      show-sql: true
+      properties:
+        hibernate:
+          format_sql: true
+
+app:
+  jwt:
+    secret: 5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437
+    expiration: 86400000 # 1 day
