@@ -27,10 +27,12 @@ public class User extends BaseEntity {
     @Column(name = "password_hash", nullable = false)
     private String password;
 
+    @Builder.Default
     @Column(name = "reputation_score")
     private Integer reputationScore = 0;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(name = "role", length = 20)
     private SystemRole role = SystemRole.ROLE_USER;
 }

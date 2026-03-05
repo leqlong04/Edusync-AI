@@ -1,5 +1,6 @@
 package com.edusync.service;
 
+import com.edusync.common.enums.SystemRole;
 import com.edusync.exception.AppException;
 import com.edusync.model.dto.request.LoginRequest;
 import com.edusync.model.dto.request.RegisterRequest;
@@ -40,6 +41,7 @@ public class AuthService {
                 .username(registerRequest.getUsername())
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .role(SystemRole.ROLE_USER)
                 .build();
 
         return userRepository.save(user);

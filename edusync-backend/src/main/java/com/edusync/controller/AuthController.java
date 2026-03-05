@@ -31,4 +31,9 @@ public class AuthController {
         JwtAuthenticationResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logoutUser() {
+       return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
+    }
 }
