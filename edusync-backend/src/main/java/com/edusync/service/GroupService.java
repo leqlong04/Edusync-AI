@@ -6,6 +6,7 @@ import com.edusync.common.enums.JoinRequestStatus;
 import com.edusync.exception.AppException;
 import com.edusync.model.dto.request.CreateGroupRequest;
 import com.edusync.model.dto.response.GroupResponse;
+import com.edusync.model.dto.response.JoinRequestResponse;
 import com.edusync.model.entity.Group;
 import com.edusync.model.entity.GroupJoinRequest;
 import com.edusync.model.entity.GroupMember;
@@ -53,7 +54,7 @@ public class GroupService {
         
         groupMemberRepository.save(member);
 
-        return mapToResponse(savedGroup);
+        return mapToResponse(savedGroup, currentUser.getId());
     }
 
     @Transactional
@@ -117,13 +118,13 @@ public class GroupService {
 
     public List<GroupResponse> getUserGroups(Long userId) {
         return groupMemberRepository.findGroupsByUserIdWithDetails(userId).stream()
-                .map(member -> mapToResponse(member.getGroup()))
+                .map(member -> mapToResponse(member.getGroup(), userId))
                 .collect(Collectors.toList());
     }
 
     public List<GroupResponse> getDiscoveryGroups(Long userId) {
         return groupRepository.findGroupsUserNotJoined(userId).stream()
-                .map(this::mapToResponse)
+                .map(group -> mapToResponse(group, userId))
                 .collect(Collectors.toList());
     }
 
@@ -151,12 +152,31 @@ public class GroupService {
         groupRepository.delete(group);
     }
 
+    public List<JoinRequestResponse> getJoinRequests(Long groupId, User currentUser) {
+        validateAdminOrOwner(groupId, currentUser.getId());
+        return groupJoinRequestRepository.findByGroupIdAndStatus(groupId, JoinRequestStatus.PENDING).stream()
+                .map(req -> JoinRequestResponse.builder()
+                        .id(req.getId())
+                        .groupId(req.getGroup().getId())
+                        .groupName(req.getGroup().getName())
+                        .userId(req.getUser().getId())
+                        .username(req.getUser().getUsername())
+                        .status(req.getStatus())
+                        .createdAt(req.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     @Transactional
-    public void approveJoinRequest(Long requestId, User currentUser) {
+    public void approveJoinRequest(Long groupId, Long requestId, User currentUser) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new AppException("Join request not found", HttpStatus.NOT_FOUND));
 
-        validateAdminOrOwner(request.getGroup().getId(), currentUser.getId());
+        if (!request.getGroup().getId().equals(groupId)) {
+            throw new AppException("Request does not belong to this group", HttpStatus.BAD_REQUEST);
+        }
+
+        validateAdminOrOwner(groupId, currentUser.getId());
 
         if (request.getStatus() != JoinRequestStatus.PENDING) {
             throw new AppException("Request is already processed", HttpStatus.BAD_REQUEST);
@@ -176,11 +196,15 @@ public class GroupService {
     }
 
     @Transactional
-    public void rejectJoinRequest(Long requestId, User currentUser) {
+    public void rejectJoinRequest(Long groupId, Long requestId, User currentUser) {
         GroupJoinRequest request = groupJoinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new AppException("Join request not found", HttpStatus.NOT_FOUND));
 
-        validateAdminOrOwner(request.getGroup().getId(), currentUser.getId());
+        if (!request.getGroup().getId().equals(groupId)) {
+            throw new AppException("Request does not belong to this group", HttpStatus.BAD_REQUEST);
+        }
+
+        validateAdminOrOwner(groupId, currentUser.getId());
 
         if (request.getStatus() != JoinRequestStatus.PENDING) {
             throw new AppException("Request is already processed", HttpStatus.BAD_REQUEST);
@@ -199,14 +223,23 @@ public class GroupService {
         }
     }
 
-    private GroupResponse mapToResponse(Group group) {
+    private GroupResponse mapToResponse(Group group, Long currentUserId) {
+        boolean isOwnerOrAdmin = false;
+        if (group.getOwner().getId().equals(currentUserId)) {
+            isOwnerOrAdmin = true;
+        } else {
+            isOwnerOrAdmin = groupMemberRepository.findByGroupIdAndUserId(group.getId(), currentUserId)
+                    .map(m -> m.getRole() == GroupRole.ADMIN)
+                    .orElse(false);
+        }
+
         return GroupResponse.builder()
                 .id(group.getId())
                 .name(group.getName())
                 .description(group.getDescription())
                 .ownerName(group.getOwner().getUsername())
                 .visibility(group.getVisibility())
-                .joinCode(group.getJoinCode())
+                .joinCode(isOwnerOrAdmin ? group.getJoinCode() : null)
                 .createdAt(group.getCreatedAt())
                 .build();
     }
