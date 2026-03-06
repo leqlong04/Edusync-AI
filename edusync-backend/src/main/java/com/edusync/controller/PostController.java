@@ -37,18 +37,20 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(postService.getGroupPosts(groupId, currentUser)));
     }
 
-    @GetMapping("/posts/{id}")
+    @GetMapping("/groups/{groupId}/posts/{id}")
     public ResponseEntity<ApiResponse<PostResponse>> getPostDetail(
+            @PathVariable Long groupId,
             @PathVariable Long id,
             @CurrentUser User currentUser) {
-        return ResponseEntity.ok(ApiResponse.success(postService.getPostDetail(id, currentUser)));
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostDetail(groupId, id, currentUser)));
     }
 
-    @DeleteMapping("/posts/{id}")
+    @DeleteMapping("/groups/{groupId}/posts/{id}")
     public ResponseEntity<ApiResponse<String>> deletePost(
+            @PathVariable Long groupId,
             @PathVariable Long id,
             @CurrentUser User currentUser) {
-        postService.deletePost(id, currentUser);
+        postService.deletePost(groupId, id, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Post deleted successfully"));
     }
 }

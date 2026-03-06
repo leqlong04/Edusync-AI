@@ -87,9 +87,13 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    public PostResponse getPostDetail(Long postId, User currentUser) {
+    public PostResponse getPostDetail(Long groupId, Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new AppException("This post does not belong to the specified group", HttpStatus.BAD_REQUEST);
+        }
 
         if (!post.getGroup().isPublic()) {
             if (!groupMemberRepository.existsByGroupIdAndUserId(post.getGroup().getId(), currentUser.getId())) {
@@ -100,9 +104,13 @@ public class PostService {
     }
 
     @Transactional
-    public void deletePost(Long postId, User currentUser) {
+    public void deletePost(Long groupId, Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new AppException("Post not found", HttpStatus.NOT_FOUND));
+
+        if (!post.getGroup().getId().equals(groupId)) {
+            throw new AppException("This post does not belong to the specified group", HttpStatus.BAD_REQUEST);
+        }
 
         boolean isPostOwner = post.getUser().getId().equals(currentUser.getId());
         boolean isGroupAdmin = groupMemberRepository.findByGroupIdAndUserId(post.getGroup().getId(), currentUser.getId())
