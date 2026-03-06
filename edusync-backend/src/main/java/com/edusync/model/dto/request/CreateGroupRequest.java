@@ -1,5 +1,6 @@
 package com.edusync.model.dto.request;
 
+import com.edusync.common.enums.GroupVisibility;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -11,4 +12,6 @@ public class CreateGroupRequest {
     private String name;
 
     private String description;
+
+    private GroupVisibility visibility = GroupVisibility.PUBLIC;
 }

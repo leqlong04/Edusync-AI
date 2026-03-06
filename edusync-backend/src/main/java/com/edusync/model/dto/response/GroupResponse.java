@@ -1,5 +1,6 @@
 package com.edusync.model.dto.response;
 
+import com.edusync.common.enums.GroupVisibility;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -11,5 +12,7 @@ public class GroupResponse {
     private String name;
     private String description;
     private String ownerName;
+    private GroupVisibility visibility;
+    private String joinCode;
     private LocalDateTime createdAt;
 }

@@ -34,9 +34,11 @@ public class GroupController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse<List<GroupResponse>>> getAllGroups() {
-        return ResponseEntity.ok(ApiResponse.success(groupService.getAllGroups()));
+    @GetMapping("/discovery")
+    public ResponseEntity<ApiResponse<List<GroupResponse>>> getDiscoveryGroups(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        return ResponseEntity.ok(ApiResponse.success(groupService.getDiscoveryGroups(currentUser.getId())));
     }
 
     @GetMapping("/my")
@@ -51,8 +53,53 @@ public class GroupController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserDetails userDetails) {
         User currentUser = getCurrentUser(userDetails);
-        groupService.joinGroup(id, currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Joined group successfully"));
+        String resultMessage = groupService.joinGroup(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(resultMessage));
+    }
+
+    @PostMapping("/join-by-code/{joinCode}")
+    public ResponseEntity<ApiResponse<String>> joinGroupByCode(
+            @PathVariable String joinCode,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        groupService.joinGroupByCode(joinCode, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Joined group successfully using code"));
+    }
+
+    @DeleteMapping("/{id}/leave")
+    public ResponseEntity<ApiResponse<String>> leaveGroup(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        groupService.leaveGroup(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Left group successfully"));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> deleteGroup(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        groupService.deleteGroup(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Group deleted successfully"));
+    }
+
+    @PostMapping("/requests/{requestId}/approve")
+    public ResponseEntity<ApiResponse<String>> approveJoinRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        groupService.approveJoinRequest(requestId, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Join request approved"));
+    }
+
+    @PostMapping("/requests/{requestId}/reject")
+    public ResponseEntity<ApiResponse<String>> rejectJoinRequest(
+            @PathVariable Long requestId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = getCurrentUser(userDetails);
+        groupService.rejectJoinRequest(requestId, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Join request rejected"));
     }
 
     private User getCurrentUser(UserDetails userDetails) {
