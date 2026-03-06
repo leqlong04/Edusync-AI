@@ -2,6 +2,7 @@ package com.edusync.controller;
 
 import com.edusync.model.dto.request.CreateGroupRequest;
 import com.edusync.model.dto.response.ApiResponse;
+import com.edusync.model.dto.response.GroupMemberResponse;
 import com.edusync.model.dto.response.GroupResponse;
 import com.edusync.model.dto.response.JoinRequestResponse;
 import com.edusync.model.entity.User;
@@ -40,6 +41,13 @@ public class GroupController {
     public ResponseEntity<ApiResponse<List<GroupResponse>>> getMyGroups(
             @CurrentUser User currentUser) {
         return ResponseEntity.ok(ApiResponse.success(groupService.getUserGroups(currentUser.getId())));
+    }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<ApiResponse<List<GroupMemberResponse>>> getGroupMembers(
+            @PathVariable Long id,
+            @CurrentUser User currentUser) {
+        return ResponseEntity.ok(ApiResponse.success(groupService.getGroupMembers(id, currentUser)));
     }
 
     @PostMapping("/{id}/join")

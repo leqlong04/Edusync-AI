@@ -33,7 +33,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
-            return null; // Return null if not authenticated
+            return null;
         }
 
         Object principal = authentication.getPrincipal();

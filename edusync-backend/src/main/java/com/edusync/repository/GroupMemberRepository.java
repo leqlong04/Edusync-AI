@@ -19,6 +19,13 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember, GroupM
     """)
     List<GroupMember> findGroupsByUserIdWithDetails(@Param("userId") Long userId);
 
+    @Query("""
+        SELECT gm FROM GroupMember gm
+        JOIN FETCH gm.user u
+        WHERE gm.group.id = :groupId
+    """)
+    List<GroupMember> findMembersByGroupIdWithDetails(@Param("groupId") Long groupId);
+
     List<GroupMember> findByUserId(Long userId);
     List<GroupMember> findByGroupId(Long groupId);
     Optional<GroupMember> findByGroupIdAndUserId(Long groupId, Long userId);

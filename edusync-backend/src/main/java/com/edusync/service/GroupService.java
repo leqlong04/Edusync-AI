@@ -5,6 +5,7 @@ import com.edusync.common.enums.GroupVisibility;
 import com.edusync.common.enums.JoinRequestStatus;
 import com.edusync.exception.AppException;
 import com.edusync.model.dto.request.CreateGroupRequest;
+import com.edusync.model.dto.response.GroupMemberResponse;
 import com.edusync.model.dto.response.GroupResponse;
 import com.edusync.model.dto.response.JoinRequestResponse;
 import com.edusync.model.entity.Group;
@@ -125,6 +126,26 @@ public class GroupService {
     public List<GroupResponse> getDiscoveryGroups(Long userId) {
         return groupRepository.findGroupsUserNotJoined(userId).stream()
                 .map(group -> mapToResponse(group, userId))
+                .collect(Collectors.toList());
+    }
+
+    public List<GroupMemberResponse> getGroupMembers(Long groupId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new AppException("Group not found", HttpStatus.NOT_FOUND));
+
+        if (!group.isPublic()) {
+            if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUser.getId())) {
+                throw new AppException("You must be a member to view the member list of this group", HttpStatus.FORBIDDEN);
+            }
+        }
+
+        return groupMemberRepository.findMembersByGroupIdWithDetails(groupId).stream()
+                .map(member -> GroupMemberResponse.builder()
+                        .userId(member.getUser().getId())
+                        .username(member.getUser().getUsername())
+                        .role(member.getRole())
+                        .joinedAt(member.getJoinedAt())
+                        .build())
                 .collect(Collectors.toList());
     }
 
