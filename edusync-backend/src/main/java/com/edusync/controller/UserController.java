@@ -17,9 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+    private final com.edusync.service.GroupService groupService;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(@CurrentUser User currentUser) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserProfile(currentUser)));
+    }
+
+    @GetMapping("/me/groups")
+    public ResponseEntity<ApiResponse<java.util.List<com.edusync.model.dto.response.GroupResponse>>> getMyGroups(@CurrentUser User currentUser) {
+        return ResponseEntity.ok(ApiResponse.success(groupService.getUserGroups(currentUser.getId())));
     }
 }

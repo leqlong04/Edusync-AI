@@ -67,6 +67,15 @@ public class GroupController {
     }
 
     @DeleteMapping("/{id}/members/me")
+    public ResponseEntity<ApiResponse<String>> leaveMemberMe(
+            @PathVariable Long id,
+            @CurrentUser User currentUser) {
+        groupService.leaveGroup(id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success("Left group successfully"));
+    }
+
+    // New API path requested by user (Action-based POST)
+    @PostMapping("/{id}/leave")
     public ResponseEntity<ApiResponse<String>> leaveGroup(
             @PathVariable Long id,
             @CurrentUser User currentUser) {

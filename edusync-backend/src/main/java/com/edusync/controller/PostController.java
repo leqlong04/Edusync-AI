@@ -37,20 +37,29 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(postService.getGroupPosts(groupId, currentUser)));
     }
 
-    @GetMapping("/groups/{groupId}/posts/{id}")
+    @GetMapping({"/groups/{groupId}/posts/{postId}", "/posts/{postId}"})
     public ResponseEntity<ApiResponse<PostResponse>> getPostDetail(
-            @PathVariable Long groupId,
-            @PathVariable Long id,
+            @PathVariable(required = false) Long groupId,
+            @PathVariable Long postId,
             @CurrentUser User currentUser) {
-        return ResponseEntity.ok(ApiResponse.success(postService.getPostDetail(groupId, id, currentUser)));
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostDetail(groupId != null ? groupId : 0L, postId, currentUser)));
     }
 
-    @DeleteMapping("/groups/{groupId}/posts/{id}")
-    public ResponseEntity<ApiResponse<String>> deletePost(
-            @PathVariable Long groupId,
-            @PathVariable Long id,
+    @PutMapping({"/groups/{groupId}/posts/{postId}", "/posts/{postId}"})
+    public ResponseEntity<ApiResponse<PostResponse>> updatePost(
+            @PathVariable(required = false) Long groupId,
+            @PathVariable Long postId,
+            @Valid @RequestBody CreatePostRequest request,
             @CurrentUser User currentUser) {
-        postService.deletePost(groupId, id, currentUser);
+        return ResponseEntity.ok(ApiResponse.success(postService.updatePost(groupId != null ? groupId : 0L, postId, request, currentUser)));
+    }
+
+    @DeleteMapping({"/groups/{groupId}/posts/{postId}", "/posts/{postId}"})
+    public ResponseEntity<ApiResponse<String>> deletePost(
+            @PathVariable(required = false) Long groupId,
+            @PathVariable Long postId,
+            @CurrentUser User currentUser) {
+        postService.deletePost(groupId != null ? groupId : 0L, postId, currentUser);
         return ResponseEntity.ok(ApiResponse.success("Post deleted successfully"));
     }
 }

@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +42,7 @@ public class GroupService {
                 .joinCode(joinCode)
                 .owner(currentUser)
                 .build();
-        
+
         Group savedGroup = groupRepository.save(group);
 
         GroupMember member = GroupMember.builder()
@@ -52,7 +51,7 @@ public class GroupService {
                 .user(currentUser)
                 .role(GroupRole.OWNER)
                 .build();
-        
+
         groupMemberRepository.save(member);
 
         return mapToResponse(savedGroup, currentUser.getId());
@@ -83,17 +82,10 @@ public class GroupService {
                     .status(JoinRequestStatus.PENDING)
                     .build();
             groupJoinRequestRepository.save(request);
-            
+
             return "Join request sent. Please wait for an admin to approve.";
         } else {
-            GroupMember member = GroupMember.builder()
-                    .id(new GroupMember.GroupMemberId(groupId, currentUser.getId()))
-                    .group(group)
-                    .user(currentUser)
-                    .role(GroupRole.MEMBER)
-                    .build();
-
-            groupMemberRepository.save(member);
+            addMemberToGroup(groupId, group, currentUser);
             return "Joined group successfully";
         }
     }
@@ -107,28 +99,24 @@ public class GroupService {
             throw new AppException("User already a member of this group", HttpStatus.BAD_REQUEST);
         }
 
-        GroupMember member = GroupMember.builder()
-                .id(new GroupMember.GroupMemberId(group.getId(), currentUser.getId()))
-                .group(group)
-                .user(currentUser)
-                .role(GroupRole.MEMBER)
-                .build();
-
-        groupMemberRepository.save(member);
+        addMemberToGroup(group.getId(), group, currentUser);
     }
 
+    @Transactional(readOnly = true)
     public List<GroupResponse> getUserGroups(Long userId) {
         return groupMemberRepository.findGroupsByUserIdWithDetails(userId).stream()
                 .map(member -> mapToResponse(member.getGroup(), userId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<GroupResponse> getDiscoveryGroups(Long userId) {
         return groupRepository.findGroupsUserNotJoined(userId).stream()
                 .map(group -> mapToResponse(group, userId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<GroupMemberResponse> getGroupMembers(Long groupId, User currentUser) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new AppException("Group not found", HttpStatus.NOT_FOUND));
@@ -146,7 +134,7 @@ public class GroupService {
                         .role(member.getRole())
                         .joinedAt(member.getJoinedAt())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -173,6 +161,7 @@ public class GroupService {
         groupRepository.delete(group);
     }
 
+    @Transactional(readOnly = true)
     public List<JoinRequestResponse> getJoinRequests(Long groupId, User currentUser) {
         validateAdminOrOwner(groupId, currentUser.getId());
         return groupJoinRequestRepository.findByGroupIdAndStatus(groupId, JoinRequestStatus.PENDING).stream()
@@ -185,7 +174,7 @@ public class GroupService {
                         .status(req.getStatus())
                         .createdAt(req.getCreatedAt())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
@@ -206,14 +195,7 @@ public class GroupService {
         request.setStatus(JoinRequestStatus.APPROVED);
         groupJoinRequestRepository.save(request);
 
-        GroupMember newMember = GroupMember.builder()
-                .id(new GroupMember.GroupMemberId(request.getGroup().getId(), request.getUser().getId()))
-                .group(request.getGroup())
-                .user(request.getUser())
-                .role(GroupRole.MEMBER)
-                .build();
-
-        groupMemberRepository.save(newMember);
+        addMemberToGroup(request.getGroup().getId(), request.getGroup(), request.getUser());
     }
 
     @Transactional
@@ -235,6 +217,7 @@ public class GroupService {
         groupJoinRequestRepository.save(request);
     }
 
+   
     private void validateAdminOrOwner(Long groupId, Long userId) {
         GroupMember adminMember = groupMemberRepository.findByGroupIdAndUserId(groupId, userId)
                 .orElseThrow(() -> new AppException("You are not a member of this group", HttpStatus.FORBIDDEN));
@@ -242,6 +225,17 @@ public class GroupService {
         if (adminMember.getRole() != GroupRole.ADMIN && adminMember.getRole() != GroupRole.OWNER) {
             throw new AppException("You do not have permission to perform this action", HttpStatus.FORBIDDEN);
         }
+    }
+
+
+    private void addMemberToGroup(Long groupId, Group group, User user) {
+        GroupMember member = GroupMember.builder()
+                .id(new GroupMember.GroupMemberId(groupId, user.getId()))
+                .group(group)
+                .user(user)
+                .role(GroupRole.MEMBER)
+                .build();
+        groupMemberRepository.save(member);
     }
 
     private GroupResponse mapToResponse(Group group, Long currentUserId) {

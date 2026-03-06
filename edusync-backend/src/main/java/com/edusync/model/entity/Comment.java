@@ -1,35 +1,38 @@
 package com.edusync.model.entity;
 
-import com.edusync.common.enums.JoinRequestStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "group_join_requests", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"group_id", "user_id", "status"})
-})
+@Table(name = "comments")
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class GroupJoinRequest extends BaseEntity {
+public class Comment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
+
     @Builder.Default
-    private JoinRequestStatus status = JoinRequestStatus.PENDING;
+    @Column(name = "is_best_answer")
+    private Boolean isBestAnswer = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
 }

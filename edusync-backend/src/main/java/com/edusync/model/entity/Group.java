@@ -3,14 +3,18 @@ package com.edusync.model.entity;
 import com.edusync.common.enums.GroupVisibility;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "groups")
 @Getter
 @Setter
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Group extends BaseEntity {
 
     @Id
@@ -34,6 +38,19 @@ public class Group extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+
+    // Cascade: when a Group is deleted, all members and join requests are also deleted
+    @Builder.Default
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupMember> members = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<GroupJoinRequest> joinRequests = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
 
     public boolean isPublic() {
         return visibility == GroupVisibility.PUBLIC;

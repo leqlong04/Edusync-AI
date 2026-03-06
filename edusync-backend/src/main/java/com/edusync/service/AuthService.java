@@ -47,6 +47,7 @@ public class AuthService {
         return userRepository.save(user);
     }
 
+    @Transactional(readOnly = true)
     public JwtAuthenticationResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
